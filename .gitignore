@@ -1,8 +1,7 @@
 *.o
-
 *.swp
 
-.valgrindopts
-
-TODO*
-todo*
+TODO.in
+TODO.out
+todo.yaml
+todo
