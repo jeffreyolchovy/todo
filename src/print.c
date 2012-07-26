@@ -15,7 +15,6 @@ void task_print_verbose(task_t* task);
 void tasktable_print(tasktable_t* table, int verbose) {
   if (!verbose)
     tasktable_print_quiet(table);
-
   else
     tasktable_print_verbose(table);
 }

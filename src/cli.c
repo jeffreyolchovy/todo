@@ -141,10 +141,10 @@ int main(int argc, char** argv) {
  */
 
   if (argc != 3) {
-		printf("Not enough arguments.\n");
-		printf("Usage: ./todo <infile> <outfile>\n");
-		return 0;
-	}
+    printf("Not enough arguments.\n");
+    printf("Usage: ./todo <infile> <outfile>\n");
+    return 0;
+  }
 
   /* currently, all this does is parse the infile and rewrite it to the outfile */
 

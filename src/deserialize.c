@@ -23,16 +23,16 @@ task_status_t task_status_from_scalar(yaml_node_t* scalar);
 task_priority_t task_priority_from_scalar(yaml_node_t* scalar);
 
 tasktable_t* tasktable_read(FILE* file) {
-	yaml_parser_t parser;
+  yaml_parser_t parser;
   yaml_document_t doc;
 
-	yaml_parser_initialize(&parser);
+  yaml_parser_initialize(&parser);
   yaml_parser_set_input_file(&parser, file);
-	yaml_parser_load(&parser, &doc);
+  yaml_parser_load(&parser, &doc);
 
   tasktable_t* table = tasktable_from_doc(&doc);
 
-	yaml_parser_delete(&parser);
+  yaml_parser_delete(&parser);
   yaml_document_delete(&doc);
 
   if (!table) return NULL;
