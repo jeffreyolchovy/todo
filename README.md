@@ -7,6 +7,8 @@ Usage examples
 * List all tasks (quietly by default)
 ```sh
 $ todo -l
+```
+```
 [ ] don't forget the milk
 [x] destroy alderaan
 [ ] (party) piñata
@@ -16,9 +18,10 @@ $ todo -l
 ```
 
 * List all tasks (verbosely)
-
 ```sh
 $ todo -l -v
+```
+```
 (0)
 ============================================
 [ ] don't forget the milk
@@ -64,7 +67,7 @@ $ todo -l -k party/1
 
 * Add an unlabeled task
 ```sh
-$ todo 'don't forget the milk'
+$ todo 'don\'t forget the milk'
 ```
 
 * Add a labeled task
@@ -84,7 +87,7 @@ $ todo -a -k party/planning 'send out invitations!'
 
 * Edit a labeled task
 ```sh
-$ todo -e -k errand 'don't forget the milk!!!'
+$ todo -e -k errand 'don\'t forget the milk!!!'
 ```
 
 * Edit a subtask
