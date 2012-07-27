@@ -1,6 +1,14 @@
 todo
 ====
 
+A command line interface for writing project TODO files.
+
+Installation
+------------
+```
+$ make dependencies all && sudo make install
+```
+
 Usage examples
 --------------
 
