@@ -4,9 +4,9 @@
 #include "yaml.h"
 #include "todo.h"
 
-tasktable_t* tasktable_from_doc(yaml_document_t* doc);
+todo_t* todo_from_doc(yaml_document_t* doc);
 
-tasktable_t* tasktable_from_seq(yaml_document_t* doc, yaml_node_t* seq);
+todo_t* todo_from_seq(yaml_document_t* doc, yaml_node_t* seq);
 
 task_t* task_from_node(yaml_document_t* doc, yaml_node_t* node);
 
@@ -22,7 +22,7 @@ task_status_t task_status_from_scalar(yaml_node_t* scalar);
 
 task_priority_t task_priority_from_scalar(yaml_node_t* scalar);
 
-tasktable_t* tasktable_read(FILE* file) {
+todo_t* todo_read(FILE* file) {
   yaml_parser_t parser;
   yaml_document_t doc;
 
@@ -30,17 +30,17 @@ tasktable_t* tasktable_read(FILE* file) {
   yaml_parser_set_input_file(&parser, file);
   yaml_parser_load(&parser, &doc);
 
-  tasktable_t* table = tasktable_from_doc(&doc);
+  todo_t* todo = todo_from_doc(&doc);
 
   yaml_parser_delete(&parser);
   yaml_document_delete(&doc);
 
-  if (!table) return NULL;
+  if (!todo) return NULL;
 
-  return table;
+  return todo;
 } 
 
-tasktable_t* tasktable_from_doc(yaml_document_t* doc) {
+todo_t* todo_from_doc(yaml_document_t* doc) {
   yaml_node_t* root = yaml_document_get_root_node(doc);
 
   if (!root) return NULL; 
@@ -48,16 +48,16 @@ tasktable_t* tasktable_from_doc(yaml_document_t* doc) {
   yaml_node_t* node = yaml_document_get_node(doc, 1);
 
   if (node->type == YAML_SEQUENCE_NODE)
-    return tasktable_from_seq(doc, node);
+    return todo_from_seq(doc, node);
   else
     return NULL;
 }
 
-tasktable_t* tasktable_from_seq(yaml_document_t* doc, yaml_node_t* seq) {
+todo_t* todo_from_seq(yaml_document_t* doc, yaml_node_t* seq) {
   yaml_node_t* node;
   yaml_node_item_t* i;
 
-  tasktable_t* table = tasktable_create();
+  todo_t* todo = todo_create();
   task_t* task;
 
   for (i = seq->data.sequence.items.start;
@@ -65,10 +65,10 @@ tasktable_t* tasktable_from_seq(yaml_document_t* doc, yaml_node_t* seq) {
     node = yaml_document_get_node(doc, (int) *i);
     task = task_from_node(doc, node);
 
-    if (table && task) tasktable_insert(table, task);
+    if (todo && task) todo_insert(todo, task);
   }
 
-  return table;
+  return todo;
 }
 
 task_t* task_from_node(yaml_document_t* doc, yaml_node_t* node) {
@@ -102,7 +102,7 @@ task_t* task_from_mapping(yaml_document_t* doc, yaml_node_t* node) {
   char* key;
   char* stat_value;
   char* prio_value;
-  tasktable_t* deps;
+  todo_t* deps;
 
   name = NULL;
   desc = NULL;
@@ -138,7 +138,7 @@ task_t* task_from_mapping(yaml_document_t* doc, yaml_node_t* node) {
         prio = LOW;
     } else if (strcmp(key, "tasks") == 0) {
       assert(v_node->type == YAML_SEQUENCE_NODE);
-      deps = tasktable_from_seq(doc, v_node);
+      deps = todo_from_seq(doc, v_node);
     }
   }
 
@@ -146,12 +146,12 @@ task_t* task_from_mapping(yaml_document_t* doc, yaml_node_t* node) {
     task = task_create(name, desc);
     task->status = stat;
     task->priority = prio;
-    if (deps) task->tasks = deps;
+    if (deps) task->todos = deps;
     return task;
   }
 
-  // even though we couldn't create a task, a tasktable may have been allocated for the tasks member
-  if (deps) tasktable_destroy(deps);
+  // even though we couldn't create a task, a todo may have been allocated for the tasks member
+  if (deps) todo_destroy(deps);
 
   return NULL;
 }

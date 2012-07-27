@@ -2,18 +2,18 @@
 #include "yaml.h"
 #include "todo.h"
 
-void tasktable_write(tasktable_t* table, FILE* file);
+void todo_write(todo_t* todo, FILE* file);
 
-int doc_append_tasktable(yaml_document_t* doc, tasktable_t* table);
+int doc_append_todo(yaml_document_t* doc, todo_t* todo);
 
-void tasktable_write(tasktable_t* tasktable, FILE* file) {
+void todo_write(todo_t* todo, FILE* file) {
   yaml_emitter_t emitter;
   yaml_document_t doc;
 
   yaml_emitter_initialize(&emitter);
   yaml_document_initialize(&doc, NULL, NULL, NULL, 0, 0);
 
-  doc_append_tasktable(&doc, tasktable);
+  doc_append_todo(&doc, todo);
 
   yaml_emitter_set_output_file(&emitter, file);
   yaml_emitter_open(&emitter);
@@ -27,8 +27,8 @@ void tasktable_write(tasktable_t* tasktable, FILE* file) {
 void doc_append_task(yaml_document_t* doc, int root, task_t* task) {
   int node;
 
-  if (!task->name && task->status == INCOMPLETE && task->priority == NORMAL && !task->tasks) {
-    node = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->description, -1, YAML_DOUBLE_QUOTED_SCALAR_STYLE);
+  if (!task->key && task->status == INCOMPLETE && task->priority == NORMAL && !task->todos) {
+    node = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->value, -1, YAML_DOUBLE_QUOTED_SCALAR_STYLE);
     yaml_document_append_sequence_item(doc, root, node);
   } else {
     int key = 0;
@@ -38,12 +38,12 @@ void doc_append_task(yaml_document_t* doc, int root, task_t* task) {
     yaml_document_append_sequence_item(doc, root, node);
 
     key = yaml_document_add_scalar(doc, NULL, (unsigned char*) "description", -1, YAML_PLAIN_SCALAR_STYLE);
-    value = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->description, -1, YAML_DOUBLE_QUOTED_SCALAR_STYLE);
+    value = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->value, -1, YAML_DOUBLE_QUOTED_SCALAR_STYLE);
     yaml_document_append_mapping_pair(doc, node, key, value);
 
-    if (task->name) {
+    if (task->key) {
       key = yaml_document_add_scalar(doc, NULL, (unsigned char*) "name", -1, YAML_PLAIN_SCALAR_STYLE);
-      value = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->name, -1, YAML_PLAIN_SCALAR_STYLE);
+      value = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->key, -1, YAML_PLAIN_SCALAR_STYLE);
       yaml_document_append_mapping_pair(doc, node, key, value);
     }
 
@@ -72,9 +72,9 @@ void doc_append_task(yaml_document_t* doc, int root, task_t* task) {
       }
     }
 
-    if (task->tasks) {
+    if (task->todos) {
       key = yaml_document_add_scalar(doc, NULL, (unsigned char*) "tasks", -1, YAML_PLAIN_SCALAR_STYLE);
-      value = doc_append_tasktable(doc, task->tasks);
+      value = doc_append_todo(doc, task->todos);
       yaml_document_append_mapping_pair(doc, node, key, value);
     }
   }
@@ -95,12 +95,12 @@ void doc_append_taskmap(yaml_document_t* doc, int root, taskmap_t* map) {
       doc_append_tasklist(doc, root, map->lists[i]);
 }
 
-int doc_append_tasktable(yaml_document_t* doc, tasktable_t* table) {
+int doc_append_todo(yaml_document_t* doc, todo_t* todo) {
   int root = yaml_document_add_sequence(doc, NULL, YAML_ANY_SEQUENCE_STYLE);
 
-  if (table->map) doc_append_taskmap(doc, root, table->map);
+  if (todo->map) doc_append_taskmap(doc, root, todo->map);
 
-  if (table->list) doc_append_tasklist(doc, root, table->list);
+  if (todo->list) doc_append_tasklist(doc, root, todo->list);
 
   return root;
 }

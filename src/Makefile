@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-c -g -O -Wall -I../lib/libyaml/build/include -I.
 LDFLAGS=-L../lib/libyaml/build/lib -lyaml
-SOURCES=$(shell ls *.c)#api.c serialize.c deserialize.c print.c cli.c
+SOURCES=$(shell ls *.c)
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=todo
 
@@ -29,4 +29,4 @@ uninstall-dependencies:
 	
 test: all
 	$(CC) -Wall tests/api_test.c api.o -o tests/api_test.o
-	- tests/api_test.o
+	@tests/api_test.o

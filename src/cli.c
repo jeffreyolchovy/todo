@@ -1,173 +1,135 @@
 #include<stdio.h>
 #include<assert.h>
+#include<unistd.h>
 #include "yaml.h"
 #include "todo.h"
 
-typedef enum cli_opt_actions_e {
-  HELP,
-  LIST,
-  ADD,
-  REMOVE,
-  EDIT,
-  MOVE,
-  MARK,
-  PRIORITIZE
-} cli_opt_actions_t;
-
-typedef enum cli_opt_filter_opts_e {
-  ALL,
-  ONLY_INCOMPLETE,
-  ONLY_COMPLETED
-} cli_opt_filter_opts_t;
-
-typedef enum cli_opt_sort_opts_e {
-  BY_NATURAL,
-  BY_PRIORITY_ASC,
-  BY_PRIORITY_DESC
-} cli_opt_sort_opts_t;
+void usage(const char* error_buffer) {
+  if (error_buffer) printf("%s\n", error_buffer);
+  printf("Usage: todo -[h|l|a|r|e|m|o|x|p] -[q|v] [-k key] [-f filename] task\n");
+}
 
 int main(int argc, char** argv) {
-/* TODO
- *
- * parse cli options
- *
- * :a:r:e:o:x:s:q:lmphv
- * 
- *  mutex opts:
- *    a r e o x l m p h
- *
- *  list all tasks (verbosely)
- *  $ todo -lv
- *
- *  Task: errand
- *  ============================================
- *  [ ] don't forget the milk
- *  --------------------------------------------
- *    Task: 0
- *    ------------------------------------------
- *    [ ] and the bread too
- *    ------------------------------------------
- *    Task: 1
- *    ------------------------------------------
- *    [ ] eggs?
- *    ------------------------------------------
- *      Task: 0 
- *      ----------------------------------------
- *      [ ] something
- *      ----------------------------------------
- *      ... more ...
- *  ============================================
- *
- *  Task: 0
- *  ============================================
- *  [x] destroy alderaan 
- *  ============================================
- *
- *  list all tasks (quietly)
- *  $ todo -lq
- *
- *  [ ] (errand) don't forget the milk
- *    [ ] and the bread too
- *    [ ] eggs?
- *      [ ] something
- *        [ ] something else
- *  [x] destroy alderaan
- *
- *  list labeled task
- *  $ todo -l errand
- *
- *  list unlabeled task
- *  $ todo -l 4
- *
- *  list labeled subtask
- *  $ todo -l errand/reminder
- *
- *  list unlabeled subtask
- *  $ todo -l errand/0
- *
- *  list (sort / filter options)
- *  $ todo -ls [p|x|o]
- *
- *  add an unlabeled task
- *  $ todo don't forget the milk
- * 
- *  add a labeled task
- *  $ todo -a errand don't forget the milk
- *
- *  add an unlabeled subtask
- *  $ todo -a errand/ and the bread too
- *  
- *  add a labeled subtask
- *  $ todo -a errand/reminder and the bread too
- *
- *  edit a labeled task
- *  $ todo -e errand don't forget the milk
- *
- *  edit an unlabeled subtask
- *  $ todo -e errand/2 and the bread too
- *  
- *  edit a labeled subtask
- *  $ todo -e errand/reminder and the bread too
- *
- *  rm an unlabeled task
- *  $ todo -r 4
- *
- *  rm a labeled task
- *  $ todo -r errand
- *
- *  mv a labeled task
- *  $ todo -m errand reminder
- *
- *  mv a labeled task (to next natural index)
- *  $ todo -m errand .
- *
- *  mv an unlabeled task into a labeled's subtasks
- *  $ todo -m 4 errand/
- *
- *  mark as complete 
- *  $ todo -x errand 
- *
- *  mark as incomplete
- *  $ todo -o errand
- *
- *  increment priority
- *  $ todo +p errand
- *
- *  decrement priority
- *  $ todo -p errand
- *
- *  change priority
- *  $ todo [+|-]p [urgent|high|normal|low] errand
- */
+  int exit_code = 0;
 
-  if (argc != 3) {
-    printf("Not enough arguments.\n");
-    printf("Usage: ./todo <infile> <outfile>\n");
-    return 0;
+  // the current opt to be parsed and the (default) values of the action and verbose opts
+  int opt, action_opt = 0, verbose_opt = 0;
+
+  // the value of the key (k) opt
+  char* key = NULL;
+
+  // the (default) value of the file (f) opt
+  char* filename = "TODO.yml";
+
+  // the value of the remaining non-option args
+  char* arg = NULL;
+
+  char* error_buffer = NULL;
+
+  // the format string to be printed if a mutex error is triggered
+  char* mutex_error_f = "-%c and -%c are mutually exclusive options";
+
+  // parse cli options
+  while ((opt = getopt(argc, argv, ":hlaremoxpvqk:f:")) != -1) {
+    switch (opt) {
+      case 'h':
+      case 'l':
+      case 'a':
+      case 'r':
+      case 'e':
+      case 'm':
+      case 'o':
+      case 'x':
+      case 'p':
+        if (action_opt)
+          asprintf(&error_buffer, mutex_error_f, opt, action_opt);
+        else
+          action_opt = opt;
+        break;
+      
+      case 'v':
+      case 'q':
+        if (verbose_opt)
+          asprintf(&error_buffer, mutex_error_f, opt, verbose_opt);
+        else
+          verbose_opt = opt;
+        break;
+
+      case 'k':
+        key = optarg;
+        break;
+
+      case 'f':
+        filename = optarg;
+        break;
+
+      case ':':
+        asprintf(&error_buffer, "Option flag -%c requires an argument", optopt);
+        break;
+
+      case '?':
+        asprintf(&error_buffer, "Unknown option: -%c", optopt);
+        break;
+    }
   }
 
-  /* currently, all this does is parse the infile and rewrite it to the outfile */
+  if (error_buffer) {
+    usage(error_buffer);
+    exit_code = 1;
+  } else {
+    // set default action to 'ADD'
+    if (!action_opt)
+      action_opt = 'a';
 
-  FILE* infile = fopen(argv[1], "r");
+    // set default verbosity to 'QUIET'
+    if (!verbose_opt)
+      verbose_opt = 'q';
 
-  if (infile) {
-    tasktable_t* table = tasktable_read(infile);
+    // join remaining args as a space delimited string
+    while (optind < argc) {
+      if (arg)
+        asprintf(&arg, "%s %s", arg, argv[optind]);
+      else
+        arg = argv[optind];
 
-    if (table) {
-      tasktable_print(table, 0);
-
-      FILE* outfile = fopen(argv[2], "w");
-
-      if (outfile) {
-        tasktable_write(table, outfile);
-        fclose(outfile);
-      }
-
-      tasktable_destroy(table);
+      optind++;
     }
 
-    fclose(infile);
+    printf("file: %s\n", filename);
+    printf("action: %c\n", action_opt);
+    printf("key: %s\n", key);
+    printf("verbose: %c\n", verbose_opt);
+    printf("non-option arg: %s\n", arg);
+
+    FILE* file = fopen(filename, "r+");
+
+    if (file) {
+      todo_t* todo = todo_read(file);
+
+      if(todo) {
+        todo_write(todo, file);
+        todo_destroy(todo);
+      } else {
+        printf("Requested file '%s' could not be parsed\n", filename);
+        exit_code = 3;
+      }
+
+      fclose(file);
+    } else {
+      if (action_opt == 'a') {
+        file = fopen(filename, "w");
+        todo_t* todo = todo_create();
+        task_t* task = task_create(key, arg);
+        todo_insert(todo, task);
+        todo_write(todo, file);
+        todo_destroy(todo);
+        fclose(file);
+      } else {
+        printf("Requested file '%s' does not exist\n", filename);
+        exit_code = 2;
+      }
+    }
   }
 
-  return 0;
+  return exit_code;
 }

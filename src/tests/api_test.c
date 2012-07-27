@@ -57,35 +57,35 @@ static char* test_taskmap() {
   return 0;
 }
 
-static char* test_tasktable() {
-  tasktable_t* table = tasktable_create();
+static char* test_todo() {
+  todo_t* todo = todo_create();
   task_t* a = task_create("A", "a");
   task_t* b = task_create(NULL, "b");
   task_t* c = task_create(NULL, "c");
   task_t* d = task_create("A", "d");
   task_t* e = task_create("B", "e");
 
-  tasktable_insert(table, a);
-  mu_assert(taskmap_lookup(table->map, "A") == a, "error table->map[A] != a");
+  todo_insert(todo, a);
+  mu_assert(taskmap_lookup(todo->map, "A") == a, "error todo->map[A] != a");
 
-  tasktable_insert(table, b);
-  tasktable_insert(table, c);
+  todo_insert(todo, b);
+  todo_insert(todo, c);
 
-  mu_assert(table->list->current == b, "error table->list->current != b");
-  mu_assert(tasklist_lookup(table->list, 1) == c, "error table->list[1] != c");
+  mu_assert(todo->list->current == b, "error todo->list->current != b");
+  mu_assert(tasklist_lookup(todo->list, 1) == c, "error todo->list[1] != c");
 
-  tasktable_remove(table, "0");
-  tasktable_remove(table, "A");
+  todo_remove(todo, "0");
+  todo_remove(todo, "A");
 
-  mu_assert(table->list->current == c, "error table->list->current != c");
+  mu_assert(todo->list->current == c, "error todo->list->current != c");
 
-  tasktable_insert(table, d);
-  tasktable_insert(table, e);
+  todo_insert(todo, d);
+  todo_insert(todo, e);
 
-  mu_assert(taskmap_lookup(table->map, "A") == d, "error table->map[A] != d");
-  mu_assert(taskmap_lookup(table->map, "B") == e, "error table->map[B] != e");
+  mu_assert(taskmap_lookup(todo->map, "A") == d, "error todo->map[A] != d");
+  mu_assert(taskmap_lookup(todo->map, "B") == e, "error todo->map[B] != e");
 
-  tasktable_destroy(table);
+  todo_destroy(todo);
 
   return 0;
 }
@@ -93,7 +93,7 @@ static char* test_tasktable() {
 static char* all_tests() {
   mu_run_test(test_tasklist);
   mu_run_test(test_taskmap);
-  mu_run_test(test_tasktable);
+  mu_run_test(test_todo);
   return 0;
 }
  

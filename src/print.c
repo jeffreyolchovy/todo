@@ -2,30 +2,30 @@
 #include<assert.h>
 #include "todo.h"
 
-void tasktable_print(tasktable_t* table, int verbose);
+void todo_print(todo_t* todo, int verbose);
 
-void tasktable_print_quiet(tasktable_t* table);
+void todo_print_quiet(todo_t* todo);
 
-void tasktable_print_verbose(tasktable_t* table);
+void todo_print_verbose(todo_t* todo);
 
 void task_print_quiet(task_t* task);
 
 void task_print_verbose(task_t* task);
 
-void tasktable_print(tasktable_t* table, int verbose) {
+void todo_print(todo_t* todo, int verbose) {
   if (!verbose)
-    tasktable_print_quiet(table);
+    todo_print_quiet(todo);
   else
-    tasktable_print_verbose(table);
+    todo_print_verbose(todo);
 }
 
-void tasktable_print_quiet(tasktable_t* table) {
-  if (table->map) {
+void todo_print_quiet(todo_t* todo) {
+  if (todo->map) {
     int i;
 
-    for (i = 0; i < table->map->size; i++)
-      if (table->map->lists[i]) {
-        tasklist_t* head = table->map->lists[i];
+    for (i = 0; i < todo->map->size; i++)
+      if (todo->map->lists[i]) {
+        tasklist_t* head = todo->map->lists[i];
 
         while (head) {
           task_print_quiet(head->current);
@@ -34,8 +34,8 @@ void tasktable_print_quiet(tasktable_t* table) {
       } 
   }
 
-  if (table->list) {
-    tasklist_t* head = table->list;
+  if (todo->list) {
+    tasklist_t* head = todo->list;
 
     while (head) {
       task_print_quiet(head->current);
@@ -44,19 +44,18 @@ void tasktable_print_quiet(tasktable_t* table) {
   }
 }
 
-void tasktable_print_verbose(tasktable_t* table) {
+void todo_print_verbose(todo_t* todo) {
 }
 
 void task_print_quiet(task_t* task) {
-  assert(task->description);
 }
 
 /* @deprecated */
 void task_print(task_t* task) {
   printf("[");
-  if (task->name)
-    printf("(%s) ", task->name);
-  printf("%s", task->description);
+  if (task->key)
+    printf("(%s) ", task->key);
+  printf("%s", task->value);
   printf("]");
 }
 

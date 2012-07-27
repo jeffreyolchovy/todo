@@ -25,14 +25,14 @@ typedef struct tasklist_s tasklist_t;
 
 typedef struct taskmap_s taskmap_t;
 
-typedef struct tasktable_s tasktable_t;
+typedef struct todo_s todo_t;
 
 typedef struct task_s {
-  char* name;
-  char* description;
+  char* key;
+  char* value;
   task_status_t status;
   task_priority_t priority;
-  tasktable_t* tasks;
+  todo_t* todos;
 } task_t;
 
 struct tasklist_s {
@@ -45,7 +45,7 @@ struct taskmap_s {
   unsigned size;
 };
 
-struct tasktable_s {
+struct todo_s {
   taskmap_t* map;
   tasklist_t* list;
 };
@@ -80,19 +80,19 @@ void taskmap_insert(taskmap_t* map, task_t* task);
 
 void taskmap_remove(taskmap_t* map, char* key);
 
-tasktable_t* tasktable_create();
+todo_t* todo_create();
 
-void tasktable_destroy(tasktable_t* table);
+void todo_destroy(todo_t* todo);
 
-void tasktable_insert(tasktable_t* table, task_t* task);
+void todo_insert(todo_t* todo, task_t* task);
 
-void tasktable_remove(tasktable_t* table, char* key);
+void todo_remove(todo_t* todo, char* key);
 
-tasktable_t* tasktable_read(FILE* file);
+todo_t* todo_read(FILE* file);
 
-void tasktable_write(tasktable_t* table, FILE* file);
+void todo_write(todo_t* todo, FILE* file);
 
-void tasktable_print(tasktable_t* table, int verbose);
+void todo_print(todo_t* todo, int verbose);
 
 #ifdef __cplusplus
 }
