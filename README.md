@@ -8,28 +8,30 @@ Usage examples
 ```sh
 $ todo -l
 ```
-```
+<!--
 [ ] don't forget the milk
 [x] destroy alderaan
 [ ] (party) piñata
   [ ] candy
   [x] wiffle bat
   [ ] length of rope
-```
+-->
 
 * List all tasks (verbosely)
 ```sh
 $ todo -l -v
 ```
-```
+<!--
 (0)
 ============================================
 [ ] don't forget the milk
 ============================================
+
 (1)
 ============================================
 [ ] destroy alderaan
 ============================================
+
 (party)
 ============================================
 [ ] piñata
@@ -46,7 +48,7 @@ $ todo -l -v
   ------------------------------------------
   [ ] length of rope
   ==========================================
-```
+-->
 
 * List a labeled task
 ```sh
