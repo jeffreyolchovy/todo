@@ -141,6 +141,17 @@ task_t* tasklist_lookup(tasklist_t* list, int i) {
   return NULL;
 }
 
+size_t tasklist_size(tasklist_t* list) {
+  int i = 0;
+
+  do {
+    i++;
+    list = list->next;
+  } while(list);
+
+  return i;
+}
+
 taskmap_t* taskmap_create(unsigned size) {
   taskmap_t* map = malloc(sizeof(taskmap_t));
 

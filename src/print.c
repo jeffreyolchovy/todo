@@ -1,85 +1,119 @@
+#include<ctype.h>
 #include<stdio.h>
-#include<assert.h>
+#include<stdlib.h>
+#include<string.h>
 #include "todo.h"
 
-void todo_print(todo_t* todo, int verbose);
+void task_print(task_t* task, size_t width, size_t margin);
 
-void todo_print_quiet(todo_t* todo);
+void task_print_verbose(task_t* task, const char* top_border, const char* bottom_border, size_t width, size_t margin);
 
-void todo_print_verbose(todo_t* todo);
-
-void task_print_quiet(task_t* task);
-
-void task_print_verbose(task_t* task);
-
-void todo_print(todo_t* todo, int verbose) {
-  if (!verbose)
-    todo_print_quiet(todo);
-  else
-    todo_print_verbose(todo);
+void print_times(const char* buffer, size_t n) {
+  while (n--) printf("%s", buffer);
 }
 
-void todo_print_quiet(todo_t* todo) {
-  if (todo->map) {
-    int i;
-
-    for (i = 0; i < todo->map->size; i++)
-      if (todo->map->lists[i]) {
-        tasklist_t* head = todo->map->lists[i];
-
-        while (head) {
-          task_print_quiet(head->current);
-          head = head->next;
-        }
-      } 
-  }
-
-  if (todo->list) {
-    tasklist_t* head = todo->list;
-
-    while (head) {
-      task_print_quiet(head->current);
-      head = head->next;
-    }
-  }
+void print_indent(const char* buffer, size_t n) {
+  printf("%-*s", (int) n, buffer);
 }
 
-void todo_print_verbose(todo_t* todo) {
+void print_column(const char* buffer, size_t width, size_t margin) {
+  size_t count, buflen;
+  const char *ptr, *endptr;
+
+  count = 0;
+  buflen = strlen(buffer);
+
+  do {
+    ptr = buffer + count;
+
+    /* don't set endptr beyond the end of the buffer */
+    if (ptr - buffer + width <= buflen)
+      endptr = ptr + width;
+    else
+      endptr = buffer + buflen;
+
+    /* back up EOL to a null terminator or space */
+    while (*(endptr) && !isspace(*(endptr))) endptr--;
+
+    count += fwrite(ptr, 1, endptr - ptr, stdout);
+
+    /* print a newline and an indent */
+    print_indent("\n", (size_t) buflen != count ? margin : 0);
+  } while (*endptr);
 }
 
-void task_print_quiet(task_t* task) {
-}
-
-/* @deprecated */
-void task_print(task_t* task) {
-  printf("[");
-  if (task->key)
-    printf("(%s) ", task->key);
-  printf("%s", task->value);
-  printf("]");
-}
-
-/* @deprecated */
-void tasklist_print(tasklist_t* list) {
+void tasklist_print(tasklist_t* list, int verbose) {
   while(list) {
-    task_print(list->current);
-    if (list->next) printf(", ");
+    if (verbose)
+      task_print_verbose(list->current, "=", "=", 80, 0);
+    else
+      task_print(list->current, 80, 0);
+
     list = list->next;
   }
-
-  printf("\n");
 }
 
-/* @deprecated */
-void taskmap_print(taskmap_t* map) {
+void taskmap_print(taskmap_t* map, int verbose) {
   int i;
 
   for (i = 0; i < map->size; i++) {
-    printf("[%d] -> ", i);
-
-    if(map->lists[i])
-      tasklist_print(map->lists[i]);
-    else
-      printf("NIL\n");
+    if (map->lists[i])
+      tasklist_print(map->lists[i], verbose);
   }
+}
+
+void todo_print(todo_t* todo, int verbose) {
+  taskmap_print(todo->map, verbose);
+  tasklist_print(todo->list, verbose);
+}
+
+void task_print(task_t* task, size_t width, size_t margin) {
+  size_t inner_margin = 4;
+
+  // print status
+  print_indent("", margin);
+
+  if (task->status == COMPLETE)
+    printf("[x] ");
+  else
+    printf("[ ] ");
+
+  // print value
+  if (task->value)
+    print_column(task->value, width - inner_margin - margin, inner_margin + margin);
+}
+
+void task_print_verbose(task_t* task, const char* top_border, const char* bottom_border, size_t width, size_t margin) {
+  size_t inner_margin = 4;
+
+  // print key line
+  print_indent("", margin); 
+
+  if (task->key)
+    printf("(%s)", task->key);
+  else
+    printf("(?)");
+
+  printf("\n");
+
+  // print top border line
+  print_indent("", margin);
+  print_times(top_border, width - margin);
+  printf("\n");
+
+  // print status and value column
+  print_indent("", margin);
+
+  if (task->status == COMPLETE)
+    printf("[x] ");
+  else
+    printf("[ ] ");
+
+  if (task->value)
+    print_column(task->value, width - inner_margin - margin, inner_margin + margin);
+
+  // print bottom border line
+  print_indent("", margin);
+  print_times(bottom_border, width - margin);
+  printf("\n");
 }

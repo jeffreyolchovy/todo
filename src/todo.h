@@ -45,9 +45,15 @@ struct taskmap_s {
   unsigned size;
 };
 
-struct todo_s {
-  taskmap_t* map;
+struct taskset_s {
   tasklist_t* list;
+  taskmap_t* map;
+};
+
+struct todo_s {
+  //taskset_t* set;
+  tasklist_t* list;
+  taskmap_t* map;
 };
 
 task_t* task_create(char* name, char* description);
@@ -67,6 +73,8 @@ void tasklist_insert(tasklist_t** ref, task_t* task, int i);
 void tasklist_remove(tasklist_t** ref, int i);
 
 task_t* tasklist_lookup(tasklist_t* list, int i);
+
+size_t tasklist_size(tasklist_t* list);
 
 taskmap_t* taskmap_create(unsigned size);
 

@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   int exit_code = 0;
 
   // the current opt to be parsed and the (default) values of the action and verbose opts
-  int opt, action_opt = 0, verbose_opt = 0;
+  int opt, action_opt = 0, verbose_flag = 0;
 
   // the value of the key (k) opt
   char* key = NULL;
@@ -48,11 +48,7 @@ int main(int argc, char** argv) {
         break;
       
       case 'v':
-      case 'q':
-        if (verbose_opt)
-          asprintf(&error_buffer, mutex_error_f, opt, verbose_opt);
-        else
-          verbose_opt = opt;
+        verbose_flag = 1;
         break;
 
       case 'k':
@@ -75,22 +71,25 @@ int main(int argc, char** argv) {
 
   if (error_buffer) {
     usage(error_buffer);
+    free(error_buffer);
     exit_code = 1;
   } else {
     // set default action to 'ADD'
     if (!action_opt)
       action_opt = 'a';
 
-    // set default verbosity to 'QUIET'
-    if (!verbose_opt)
-      verbose_opt = 'q';
+    char* temp;
 
     // join remaining args as a space delimited string
     while (optind < argc) {
-      if (arg)
-        asprintf(&arg, "%s %s", arg, argv[optind]);
-      else
-        arg = argv[optind];
+      if (arg) {
+        asprintf(&temp, "%s %s", arg, argv[optind]);
+        free(arg);
+        arg = temp;
+      } else {
+        arg = malloc(strlen(argv[optind]) + 1);
+        arg = strcpy(arg, argv[optind]);
+      }
 
       optind++;
     }
@@ -98,8 +97,9 @@ int main(int argc, char** argv) {
     printf("file: %s\n", filename);
     printf("action: %c\n", action_opt);
     printf("key: %s\n", key);
-    printf("verbose: %c\n", verbose_opt);
+    printf("verbose: %d\n", verbose_flag);
     printf("non-option arg: %s\n", arg);
+    printf("\n");
 
     FILE* file = fopen(filename, "r+");
 
@@ -107,6 +107,8 @@ int main(int argc, char** argv) {
       todo_t* todo = todo_read(file);
 
       if(todo) {
+        todo_print(todo, verbose_flag);
+        rewind(file);
         todo_write(todo, file);
         todo_destroy(todo);
       } else {
@@ -130,6 +132,9 @@ int main(int argc, char** argv) {
       }
     }
   }
+
+  // cleanup
+  free(arg);
 
   return exit_code;
 }
