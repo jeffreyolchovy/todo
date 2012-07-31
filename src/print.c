@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include<ctype.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -193,7 +194,7 @@ void print_column(const char* buffer, size_t width, size_t margin, int is_hangin
 }
 
 static size_t tty_width() {
-  struct ttysize ttys; 
+  struct winsize ttys; 
   ioctl(0, TIOCGWINSZ, &ttys);
-  return ttys.ts_cols;
+  return ttys.ws_col;
 }

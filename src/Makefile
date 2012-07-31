@@ -19,7 +19,7 @@ endif
 local: $(SOURCES) $(EXECUTABLE)
 		
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@

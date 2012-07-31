@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdarg.h>
@@ -317,7 +318,7 @@ int execute_prioritize(todo_t* todo, char* path, char* priority) {
   void mark_task_normal (task_t* task);
   void mark_task_low    (task_t* task);
 
-  void* f;
+  void* f = NULL;
 
   switch(task_priority_valueof(priority)) {
   case URGENT:
