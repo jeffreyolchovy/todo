@@ -13,7 +13,7 @@ task_t* task_create(char* key, char* value) {
   task->value     = NULL;
   task->status    = INCOMPLETE;
   task->priority  = NORMAL;
-  task->todos     = NULL;
+  task->todo      = NULL;
 
   if (key) {
     task->key = malloc(strlen(key) + 1);
@@ -31,11 +31,44 @@ task_t* task_create(char* key, char* value) {
 void task_destroy(task_t* task) {
   if (!task) return;
 
-  if(task->todos) todo_destroy(task->todos);
+  if(task->todo) todo_destroy(task->todo);
 
   free(task->key);
   free(task->value);
   free(task);
+}
+
+void task_apply(task_t* task, void (*f)(task_t*)) {
+  if (task->todo) todo_apply(task->todo, *f);
+  (*f)(task);
+}
+
+task_status_t task_status_valueof(char* str) {
+  if (strcmp(str, "complete") == 0)
+    return COMPLETE;
+
+  if (strcmp(str, "incomplete") == 0)
+    return INCOMPLETE;
+
+  // default
+  return INCOMPLETE;
+}
+
+task_priority_t task_priority_valueof(char* str) {
+  if (strcmp(str, "urgent") == 0)
+    return URGENT;
+
+  if (strcmp(str, "high") == 0)
+    return HIGH;
+
+  if (strcmp(str, "normal") == 0)
+    return NORMAL;
+
+  if (strcmp(str, "low") == 0)
+    return LOW;
+
+  // default
+  return NORMAL;
 }
 
 tasklist_t* tasklist_create(task_t* task) {
@@ -59,6 +92,13 @@ void tasklist_destroy(tasklist_t* list) {
     task_destroy(list->current);
 
   free(list);
+}
+
+void tasklist_apply(tasklist_t* list, void (*f)(task_t*)) {
+  while(list) {
+    task_apply(list->current, *f);
+    list = list->next;
+  }
 }
 
 void tasklist_append(tasklist_t** ref, task_t* task) {
@@ -95,9 +135,6 @@ void tasklist_insert(tasklist_t** ref, task_t* task, int i) {
 
     head = head->next;
   }
-
-  if(i > j)
-    printf("requested index is out of bounds\n");
 }
 
 void tasklist_remove(tasklist_t** ref, int i) {
@@ -120,22 +157,16 @@ void tasklist_remove(tasklist_t** ref, int i) {
 
     head = head->next;
   }
-
-  if (i > j)
-    printf("requested index is out of bounds\n");
 }
 
 task_t* tasklist_lookup(tasklist_t* list, int i) {
   int j = 0;
 
   while(list) {
-    if (i == j)
+    if (i == j++)
       return list->current;
 
-    if (list->next)
-      list = list->next;
-
-    j++;
+    list = list->next;
   }
 
   return NULL;
@@ -152,17 +183,17 @@ size_t tasklist_size(tasklist_t* list) {
   return i;
 }
 
-taskmap_t* taskmap_create(unsigned size) {
+taskmap_t* taskmap_create(unsigned lists_size) {
   taskmap_t* map = malloc(sizeof(taskmap_t));
 
   if (!map) return NULL;
 
-  map->size   = size;
-  map->lists  = malloc(sizeof(tasklist_t*) * size);
+  map->lists = malloc(sizeof(tasklist_t*) * lists_size);
+  map->lists_size = lists_size;
 
   int i;
 
-  for (i = 0; i < map->size; i++)
+  for (i = 0; i < map->lists_size; i++)
     map->lists[i] = NULL;
 
   return map;
@@ -173,12 +204,20 @@ void taskmap_destroy(taskmap_t* map) {
 
   int i;
 
-  for (i = 0; i < map->size; i++)
+  for (i = 0; i < map->lists_size; i++)
     if (map->lists[i])
       tasklist_destroy(map->lists[i]);
 
   free(map->lists);
   free(map);
+}
+
+void taskmap_apply(taskmap_t* map, void (*f)(task_t*)) {
+  int i;
+
+  for (i = 0; i < map->lists_size; i++)
+    if (map->lists[i])
+      tasklist_apply(map->lists[i], *f);
 }
 
 unsigned taskmap_hash(taskmap_t* map, char* key) {
@@ -187,7 +226,7 @@ unsigned taskmap_hash(taskmap_t* map, char* key) {
   for (hash = 0; *key != '\0'; key++)
     hash = *key + 31 * hash;
 
-  return hash % map->size;
+  return hash % map->lists_size;
 }
 
 task_t* taskmap_lookup(taskmap_t* map, char* key) {
@@ -238,14 +277,14 @@ void taskmap_remove(taskmap_t* map, char* key) {
   for (list1 = map->lists[hash], list2 = NULL; list1 != NULL;
       list2 = list1, list1 = list1->next) 
     if (strcmp(key, list1->current->key) == 0) {
-      /* found a match */
+      // found a match
       free(list1->current);
 
       if (list2 == NULL) 
-        /* at the beginning? */
+        // is it at the beginning?
         map->lists[hash] = list1->next;
       else 
-        /* in the middle or at the end? */
+        // is it in the middle or at the end?
         list2->next = list1->next;
 
       free(list1);
@@ -272,9 +311,17 @@ void todo_destroy(todo_t* todo) {
   free(todo);
 }
 
+void todo_apply(todo_t* todo, void (*f)(task_t*)) {
+  if (todo->map)
+    taskmap_apply(todo->map, *f);
+
+  if (todo->list)
+    tasklist_apply(todo->list, *f);
+}
+
 void todo_insert_into_map(todo_t* todo, task_t* task) {
   if (!todo->map)
-    todo->map = taskmap_create(7);
+    todo->map = taskmap_create(TASKMAP_DEFAULT_SIZE);
 
   if (todo->map)
     taskmap_insert(todo->map, task);
@@ -305,15 +352,135 @@ void todo_remove_from_list(todo_t* todo, int i) {
 }
 
 void todo_remove(todo_t* todo, char* key) {
+  task_t* task = todo_lookup(todo, key);
+
+  if (task->key) {
+    todo_remove_from_map(todo, task->key);
+  } else {
+    int i = (int) strtol(key, (char **) NULL, 10);
+    todo_remove_from_list(todo, i);
+  }
+}
+
+task_t* todo_lookup(todo_t* todo, char* key) {
   char* err;
+  int is_int = 0;
   long int i;
 
   i = strtol(key, &err, 10);
 
-  if (key[0] != '\n' && (*err == '\n' || *err == '\0')) {
-    if (i < INT_MIN && i > INT_MAX) return;
-    todo_remove_from_list(todo, (int) i);
-  } else {
-    todo_remove_from_map(todo, key);
+  if (key[0] != '\n' && (*err == '\n' || *err == '\0'))
+    is_int = i >= INT_MIN && i <= INT_MAX;
+
+  if (is_int && todo->list)
+    return tasklist_lookup(todo->list, (int) i);
+  else if (!is_int && todo->map)
+    return taskmap_lookup(todo->map, key);
+  else
+    return NULL;
+}
+
+task_t* todo_path_insert(todo_t* todo, char* path) {
+  char *ptr, *rest, *token;
+  task_t* task = NULL;
+  task_t* head = NULL;
+  todo_t* parent = todo;
+
+  char* tmp = malloc(strlen(path) + 1);
+  strcpy(tmp, path);
+
+  ptr = tmp;
+
+  while ((token = strtok_r(ptr, "/", &rest))) {
+    // if the current part path is an integer
+    if (is_int_path(token)) {
+      // cleanup resources
+      free(tmp);
+
+      // destroy the first made task alloc.
+      // which will destroy any subsequent allocs.
+      if (head) task_destroy(head);
+
+      return NULL;
+    }
+
+    task = todo_lookup(parent, token);
+
+    // task does not exist for part path, create it
+    if (!task) {
+      task = task_create(token, "");
+
+      // keep reference if this is first task alloc.
+      if (!head) head = task;
+
+      // add to parent's todo
+      todo_insert(parent, task);
+    }
+    
+    // if task does not have a todo, create it
+    if (!task->todo) {
+      todo_t* child = todo_create();
+      task->todo = child;
+    }
+
+    parent = task->todo;
+    ptr = rest;
+  }
+
+  free(tmp);
+
+  return task;
+}
+
+void todo_path_remove(todo_t* todo, char* path) {
+  char *ptr, *rest, *token, *prev;
+    
+  task_t* task = NULL;
+  todo_t* parent = todo;
+
+  char* tmp = malloc(strlen(path) + 1);
+  strcpy(tmp, path);
+
+  ptr = tmp;
+  prev = NULL;
+
+  while ((token = strtok_r(ptr, "/", &rest))) {
+    task = todo_lookup(parent, token);
+    parent = task->todo;
+    prev = token;
+    ptr = rest;
+  }
+
+  free(tmp);
+
+  if (task) {
+    if (is_todo_path(path) && task->todo) {
+      todo_destroy(task->todo);
+      task->todo = NULL;
+    } else if (parent) {
+      todo_remove(parent, prev);
+    }
   }
 }
+
+task_t* todo_path_lookup(todo_t* todo, char* path) {
+  task_t* task = NULL;
+  char *ptr, *rest, *token;
+
+  // copy path because tokenizing will turn '/' to '\0'
+  char *tmp = malloc(strlen(path) + 1);
+  strcpy(tmp, path);
+
+  ptr = tmp;
+
+  while ((token = strtok_r(ptr, "/", &rest))) {
+    // find task in current enclosing todo or in previous task's todo (if exists)
+    task = task ? task->todo ? todo_lookup(task->todo, token) : NULL : todo_lookup(todo, token);
+    ptr = rest;
+  }
+
+  free(tmp);
+
+  return task;
+}
+

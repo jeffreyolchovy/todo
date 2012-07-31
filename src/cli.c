@@ -1,140 +1,350 @@
 #include<stdio.h>
-#include<assert.h>
+#include<stdlib.h>
+#include<stdarg.h>
+#include<string.h>
+#include<limits.h>
 #include<unistd.h>
-#include "yaml.h"
 #include "todo.h"
 
-void usage(const char* error_buffer) {
-  if (error_buffer) printf("%s\n", error_buffer);
-  printf("Usage: todo -[h|l|a|r|e|m|o|x|p] -[q|v] [-k key] [-f filename] task\n");
-}
+static int DEBUG = 0;
+
+static int VERBOSE = 0;
+
+static int exit_code = 0;
+
+static char* usage = "Usage: todo [-[h|l|a|r|e|m|o|x|p]] [-[q|v]] [-k key] [-f filename] task\n";
+
+static void fatal_error(char* fmt, ...);
+
+static void vfatal_error(char* fmt, va_list argp);
 
 int main(int argc, char** argv) {
-  int exit_code = 0;
-
-  // the current opt to be parsed and the (default) values of the action and verbose opts
-  int opt, action_opt = 0, verbose_flag = 0;
+  // the current opt to be parsed and the (default) values of the cmd opt
+  int opt, cmd_opt = 0;
 
   // the value of the key (k) opt
   char* key = NULL;
 
   // the (default) value of the file (f) opt
-  char* filename = "TODO.yml";
+  char* filename = "TODO.yaml";
 
   // the value of the remaining non-option args
   char* arg = NULL;
 
-  char* error_buffer = NULL;
-
-  // the format string to be printed if a mutex error is triggered
-  char* mutex_error_f = "-%c and -%c are mutually exclusive options";
-
   // parse cli options
-  while ((opt = getopt(argc, argv, ":hlaremoxpvqk:f:")) != -1) {
+  while ((opt = getopt(argc, argv, ":hlarenoxpvDqk:f:")) != -1) {
     switch (opt) {
-      case 'h':
-      case 'l':
-      case 'a':
-      case 'r':
-      case 'e':
-      case 'm':
-      case 'o':
-      case 'x':
-      case 'p':
-        if (action_opt)
-          asprintf(&error_buffer, mutex_error_f, opt, action_opt);
-        else
-          action_opt = opt;
-        break;
-      
-      case 'v':
-        verbose_flag = 1;
-        break;
+    case 'h':
+    case 'l':
+    case 'a':
+    case 'r':
+    case 'e':
+    case 'm':
+    case 'o':
+    case 'x':
+    case 'p':
+      if (cmd_opt) {
+        char* error_fmt = "-%c and -%c are mutually exclusive options\n%s";
+        fatal_error(error_fmt, opt, cmd_opt, usage);
+      } else {
+        cmd_opt = opt;
+      }
+      break;
+    
+    case 'v':
+      VERBOSE = 1;
+      break;
 
-      case 'k':
-        key = optarg;
-        break;
+    case 'D':
+      DEBUG = 1;
+      break;
 
-      case 'f':
-        filename = optarg;
-        break;
+    case 'k':
+      key = optarg;
+      break;
 
-      case ':':
-        asprintf(&error_buffer, "Option flag -%c requires an argument", optopt);
-        break;
+    case 'f':
+      filename = optarg;
+      break;
 
-      case '?':
-        asprintf(&error_buffer, "Unknown option: -%c", optopt);
-        break;
+    case ':':
+      fatal_error("Option flag -%c requires an argument\n%s", optopt, usage);
+      break;
+
+    case '?':
+      fatal_error("Unknown option: -%c\n%s", optopt, usage);
+      break;
     }
   }
 
-  if (error_buffer) {
-    usage(error_buffer);
-    free(error_buffer);
-    exit_code = 1;
-  } else {
-    // set default action to 'ADD'
-    if (!action_opt)
-      action_opt = 'a';
+  // set default action
+  if (!cmd_opt) {
+    if (arg)
+      cmd_opt = 'a';
+    else
+      cmd_opt = 'l';
+  }
 
-    char* temp;
+  char* tmp = NULL;
 
-    // join remaining args as a space delimited string
-    while (optind < argc) {
-      if (arg) {
-        asprintf(&temp, "%s %s", arg, argv[optind]);
-        free(arg);
-        arg = temp;
-      } else {
-        arg = malloc(strlen(argv[optind]) + 1);
-        arg = strcpy(arg, argv[optind]);
-      }
-
-      optind++;
+  // join remaining args as a space delimited string
+  while (optind < argc) {
+    if (arg) {
+      asprintf(&tmp, "%s %s", arg, argv[optind]);
+      free(arg);
+      arg = tmp;
+    } else {
+      arg = malloc(strlen(argv[optind]) + 1);
+      arg = strcpy(arg, argv[optind]);
     }
 
+    optind++;
+  }
+
+  // debug
+  if (DEBUG) {
     printf("file: %s\n", filename);
-    printf("action: %c\n", action_opt);
+    printf("action: %c\n", cmd_opt);
     printf("key: %s\n", key);
-    printf("verbose: %d\n", verbose_flag);
     printf("non-option arg: %s\n", arg);
+    printf("verbose mode: %d\n", VERBOSE);
     printf("\n");
+  }
 
-    FILE* file = fopen(filename, "r+");
+  FILE* file = fopen(filename, "r+");
 
-    if (file) {
-      todo_t* todo = todo_read(file);
+  // parse todo from existing file
+  if (file) {
+    todo_t* todo = todo_read(file);
 
-      if(todo) {
-        todo_print(todo, verbose_flag);
-        rewind(file);
-        todo_write(todo, file);
-        todo_destroy(todo);
-      } else {
-        printf("Requested file '%s' could not be parsed\n", filename);
-        exit_code = 3;
-      }
-
+    if (todo) {
+      exit_code = execute(todo, cmd_opt, key, arg);
+      rewind(file);
+      todo_write(todo, file);
+      todo_destroy(todo);
       fclose(file);
     } else {
-      if (action_opt == 'a') {
-        file = fopen(filename, "w");
-        todo_t* todo = todo_create();
-        task_t* task = task_create(key, arg);
-        todo_insert(todo, task);
-        todo_write(todo, file);
-        todo_destroy(todo);
-        fclose(file);
-      } else {
-        printf("Requested file '%s' does not exist\n", filename);
-        exit_code = 2;
-      }
+      fatal_error("Requested file '%s' could not be parsed\n", filename);
     }
+  // create a new file iff nonexistent and cmd_opt is 'a' (default)
+  } else if (cmd_opt == 'a') {
+    file = fopen(filename, "w");
+    todo_t* todo = todo_create();
+    exit_code = execute(todo, cmd_opt, key, arg);
+    todo_write(todo, file);
+    todo_destroy(todo);
+    fclose(file);
+  } else {
+    fatal_error("Requested file '%s' does not exist\n", filename);
   }
 
   // cleanup
-  free(arg);
+  if (arg) free(arg);
 
   return exit_code;
 }
+
+void fatal_error(char* fmt, ...) {
+  va_list argp;
+  va_start(argp, fmt);
+  vfatal_error(fmt, argp);
+  va_end(argp);
+}
+
+void vfatal_error(char* fmt, va_list argp) {
+  char buffer[250];
+  vsnprintf(buffer, sizeof(buffer), fmt, argp);
+  printf("%s", buffer);
+  exit(++exit_code);
+}
+
+int execute(todo_t* todo, char cmd, char* key, char* arg) {
+  switch(cmd) {
+  case 'l':
+    return execute_list(todo, key);
+
+  case 'a':
+    return execute_add(todo, key, arg);
+
+  case 'e':
+    return execute_edit(todo, key, arg);
+
+  case 'r':
+    return execute_remove(todo, key);
+
+  case 'n':
+    return execute_rename(todo, key, arg);
+
+  case 'o':
+    return execute_mark(todo, key, 0);
+
+  case 'x':
+    return execute_mark(todo, key, 1);
+
+  case 'p':
+    return execute_prioritize(todo, key, arg);
+
+  default:
+    fatal_error("Command -%c not implemented", cmd);
+  }
+
+  return 0;
+}
+
+int execute_list(todo_t* todo, char* path) {
+  if (!path) {
+    // print all
+    todo_print(todo, VERBOSE);
+  } else {
+    task_t* task = todo_path_lookup(todo, path);
+
+    if (!task)
+      fatal_error("No task found at key '%s'\n", path);
+
+    if (is_todo_path(path)) {
+      if (task->todo) {
+        // print child tasks
+        todo_print(task->todo, VERBOSE);
+      } else {
+        // no-op, no child tasks
+      }
+    } else {
+      // print task and all children
+      task_print(task, VERBOSE);
+    }
+  }
+
+  return 0;
+}
+
+int execute_add(todo_t* todo, char* path, char* value) {
+  if (!path) {
+    task_t* task = task_create(NULL, value);
+    todo_insert(todo, task);
+  } else {
+    task_t* task = todo_path_insert(todo, path);
+
+    if (!task)
+      fatal_error("Can not create task at key '%s'\n", path);
+
+    if (is_todo_path(path)) {
+      todo_t* parent;
+
+      if (!task->todo) {
+        parent = todo_create();
+        task->todo = parent;
+      } else {
+        parent = task->todo;
+      }
+
+      task = task_create(NULL, value);
+      todo_insert(parent, task);
+    } else {
+      task->status = INCOMPLETE;
+      task->priority = NORMAL;
+      
+      if (task->todo) {
+        todo_destroy(task->todo);
+        task->todo = NULL;
+      }
+
+      if (task->value)
+        free(task->value);
+
+      task->value = malloc(strlen(value) + 1);
+      strcpy(task->value, value);
+    }
+  }
+    
+  return 0;
+}
+
+int execute_edit(todo_t* todo, char* path, char* value) {
+  if (!path) fatal_error("No key specified\n");
+
+  task_t* task = todo_path_lookup(todo, path);
+
+  if (!task)
+    fatal_error("No task found at key '%s'\n", path);
+
+  if (is_todo_path(path))
+    fatal_error("Key must not end with '/'\n");
+
+  if (task->value)
+    free(task->value);
+
+  task->value = malloc(strlen(value) + 1);
+  strcpy(task->value, value);
+
+  return 0;
+}
+
+int execute_remove(todo_t* todo, char* path) {
+  if (!path) fatal_error("No key specified\n");
+  todo_path_remove(todo, path);
+  return 0;
+}
+
+int execute_rename(todo_t* todo, char* from, char* to) {
+  fatal_error("Not yet implemented\n");
+  return 1;
+}
+
+int execute_mark(todo_t* todo, char* path, int is_complete) {
+  if (!path) fatal_error("No key specified\n");
+
+  task_t* task = todo_path_lookup(todo, path);
+
+  if (!task) fatal_error("No task found at key '%s'\n", path);
+
+  void mark_task_complete   (task_t*);
+  void mark_task_incomplete (task_t*);
+
+  task_apply(task, is_complete ? mark_task_complete : mark_task_incomplete);
+
+  return 0;
+}
+
+int execute_prioritize(todo_t* todo, char* path, char* priority) {
+  if (!path) fatal_error("No key specified\n");
+
+  task_t* task = todo_path_lookup(todo, path);
+
+  if (!task) fatal_error("No task found at key '%s'\n", path);
+
+  void mark_task_urgent (task_t* task);
+  void mark_task_high   (task_t* task);
+  void mark_task_normal (task_t* task);
+  void mark_task_low    (task_t* task);
+
+  void* f;
+
+  switch(task_priority_valueof(priority)) {
+  case URGENT:
+    f = mark_task_urgent;
+    break;
+
+  case HIGH:
+    f = mark_task_high;
+    break;
+
+  case NORMAL:
+    f = mark_task_normal;
+    break;
+
+  case LOW:
+    f = mark_task_low;
+    break;
+  }
+
+  task_apply(task, f);
+
+  return 0;
+}
+
+void mark_task_complete   (task_t* task) { task->status   = COMPLETE;   }
+void mark_task_incomplete (task_t* task) { task->status   = INCOMPLETE; }
+void mark_task_urgent     (task_t* task) { task->priority = URGENT;     } 
+void mark_task_high       (task_t* task) { task->priority = HIGH;       } 
+void mark_task_normal     (task_t* task) { task->priority = NORMAL;     } 
+void mark_task_low        (task_t* task) { task->priority = LOW;        } 

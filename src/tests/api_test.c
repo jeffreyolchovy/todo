@@ -1,5 +1,4 @@
 #include<stdio.h>
-#include<assert.h>
 #include "minunit.h"
 #include "../todo.h"
 
@@ -10,6 +9,7 @@ static char* test_tasklist() {
   tasklist_t* list = tasklist_create(a);
 
   mu_assert(list->current == a, "error, list->current != a");
+  mu_assert(tasklist_size(list) == 1, "error, size == 1");
 
   task_t* b = task_create(NULL, "b");
   tasklist_prepend(&list, b);
@@ -30,6 +30,8 @@ static char* test_tasklist() {
 
   task_t* e = tasklist_lookup(list, 1);
   mu_assert(e == c, "error, list[1] != c");
+
+  mu_assert(tasklist_size(list) == 2, "error, size == 2");
 
   tasklist_destroy(list);
 
@@ -89,7 +91,7 @@ static char* test_todo() {
 
   return 0;
 }
- 
+
 static char* all_tests() {
   mu_run_test(test_tasklist);
   mu_run_test(test_taskmap);

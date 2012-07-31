@@ -146,7 +146,7 @@ task_t* task_from_mapping(yaml_document_t* doc, yaml_node_t* node) {
     task = task_create(name, desc);
     task->status = stat;
     task->priority = prio;
-    if (deps) task->todos = deps;
+    if (deps) task->todo = deps;
     return task;
   }
 

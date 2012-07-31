@@ -1,12 +1,40 @@
 todo
 ====
 
-A command line interface for writing project TODO files.
+A command line interface for project TODO files.
+
+
+Usage
+-----
+```
+todo [action] [flag*] [-k key] [-f filename] <args...>
+
+actions
+  -h    show this message
+  -l    list tasks
+  -a    add a task
+  -e    edit an existing task value
+  -n    rename an existing task key
+  -o    mark task as incomplete
+  -x    mark task as complete
+  -p    set task priority
+
+flags
+  -D    debug mode
+  -v    verbose mode
+  
+```
 
 Installation
 ------------
 ```
-$ make dependencies all && sudo make install
+$ make all && sudo make install
+```
+
+Tests
+------------
+```
+$ make test
 ```
 
 Usage examples
@@ -77,19 +105,14 @@ $ todo -r -k 1
 $ todo -r -k errand
 ```
 
-* Move a labeled task
+* Rename a labeled task
 ```sh
-$ todo -m -k party fiesta
+$ todo -n -k party fiesta
 ```
 
-* Move a labeled task (to the next natural index)
+* Rename a labeled task (to the next natural index)
 ```sh
-$ todo -m -k errand .
-```
-
-* Move an unlabeled task into a labeled task's subtasks
-```sh
-$ todo -m -k 4 errand/
+$ todo -n -k errand .
 ```
 
 * Mark a task as complete 
@@ -104,6 +127,6 @@ $ todo -o -k errand
 
 * Change the priority of a task
 ```sh
-$ todo -p [+|-|urgent|high|normal|low] -k party/2
+$ todo -p -k party [urgent|high|normal|low]
 ```
 

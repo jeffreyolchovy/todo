@@ -27,7 +27,7 @@ void todo_write(todo_t* todo, FILE* file) {
 void doc_append_task(yaml_document_t* doc, int root, task_t* task) {
   int node;
 
-  if (!task->key && task->status == INCOMPLETE && task->priority == NORMAL && !task->todos) {
+  if (!task->key && task->status == INCOMPLETE && task->priority == NORMAL && !task->todo) {
     node = yaml_document_add_scalar(doc, NULL, (unsigned char*) task->value, -1, YAML_DOUBLE_QUOTED_SCALAR_STYLE);
     yaml_document_append_sequence_item(doc, root, node);
   } else {
@@ -72,9 +72,9 @@ void doc_append_task(yaml_document_t* doc, int root, task_t* task) {
       }
     }
 
-    if (task->todos) {
+    if (task->todo) {
       key = yaml_document_add_scalar(doc, NULL, (unsigned char*) "tasks", -1, YAML_PLAIN_SCALAR_STYLE);
-      value = doc_append_todo(doc, task->todos);
+      value = doc_append_todo(doc, task->todo);
       yaml_document_append_mapping_pair(doc, node, key, value);
     }
   }
@@ -90,7 +90,7 @@ void doc_append_tasklist(yaml_document_t* doc, int root, tasklist_t* list) {
 void doc_append_taskmap(yaml_document_t* doc, int root, taskmap_t* map) {
   int i;
 
-  for (i = 0; i < map->size; i++)
+  for (i = 0; i < map->lists_size; i++)
     if (map->lists[i])
       doc_append_tasklist(doc, root, map->lists[i]);
 }
