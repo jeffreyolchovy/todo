@@ -437,6 +437,7 @@ void todo_path_remove(todo_t* todo, char* path) {
     
   task_t* task = NULL;
   todo_t* parent = todo;
+  todo_t* prev_parent = NULL;
 
   char* tmp = malloc(strlen(path) + 1);
   strcpy(tmp, path);
@@ -446,8 +447,9 @@ void todo_path_remove(todo_t* todo, char* path) {
 
   while ((token = strtok_r(ptr, "/", &rest))) {
     task = todo_lookup(parent, token);
-    parent = task->todo;
     prev = token;
+    prev_parent = parent;
+    parent = task->todo;
     ptr = rest;
   }
 
@@ -457,8 +459,8 @@ void todo_path_remove(todo_t* todo, char* path) {
     if (is_todo_path(path) && task->todo) {
       todo_destroy(task->todo);
       task->todo = NULL;
-    } else if (parent) {
-      todo_remove(parent, prev);
+    } else if (prev_parent) {
+      todo_remove(prev_parent, prev);
     }
   }
 }
