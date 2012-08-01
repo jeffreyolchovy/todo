@@ -219,6 +219,8 @@ int execute_list(todo_t* todo, char* path) {
 }
 
 int execute_add(todo_t* todo, char* path, char* value) {
+  if (!value) value = "";
+
   if (!path) {
     task_t* task = task_create(NULL, value);
     todo_insert(todo, task);
