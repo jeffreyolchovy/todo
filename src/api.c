@@ -278,7 +278,7 @@ void taskmap_remove(taskmap_t* map, char* key) {
       list2 = list1, list1 = list1->next) 
     if (strcmp(key, list1->current->key) == 0) {
       // found a match
-      free(list1->current);
+      task_destroy(list1->current);
 
       if (list2 == NULL) 
         // is it at the beginning?
@@ -287,7 +287,9 @@ void taskmap_remove(taskmap_t* map, char* key) {
         // is it in the middle or at the end?
         list2->next = list1->next;
 
+      list1->current = NULL;
       free(list1);
+      //tasklist_destroy(list1);
       return;
     }
 }
@@ -448,8 +450,12 @@ void todo_path_remove(todo_t* todo, char* path) {
   while ((token = strtok_r(ptr, "/", &rest))) {
     task = todo_lookup(parent, token);
     prev = token;
-    prev_parent = parent;
-    parent = task->todo;
+
+    if(task && task->todo) {
+      prev_parent = parent;
+      parent = task->todo;
+    }
+
     ptr = rest;
   }
 
