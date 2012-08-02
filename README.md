@@ -42,36 +42,44 @@ Usage examples
 ```sh
 $ todo -l
 ```
-    [ ] (api) 
-      [ ] (rest) 
-        [x] (0) Refactor Accept header parsing
-        [ ] (1) Deprecate XML support
-    [ ] (cli) 
-      [ ] (bugs) 
-        [x] (#137) Return an exit code instead of void
-        [ ] (#142) Add null check
-    [x] (opts) Parse additional options for running in development, staging, and production environments
+<pre><code>
+[ ] (api) 
+  [ ] (rest) 
+    [x] (0) Refactor Accept header parsing
+    [ ] (1) Deprecate XML support
+[ ] (cli) 
+  [ ] (bugs) 
+    [x] (#137) Return an exit code instead of void
+    [ ] (#142) Add null check
+[x] (opts) Parse additional options for running in development, staging, and production environments
+</code></pre>
 
 * List a labeled task
 ```sh
 $ todo -l -k cli/bugs
 ```
-    [ ] (bugs)
-      [x] (#137) Return an exit code instead of void
-      [ ] (#142) Add null check
+<pre><code>
+[ ] (bugs)
+  [x] (#137) Return an exit code instead of void
+  [ ] (#142) Add null check
+</code></pre>
 
 * List child tasks
 ```sh
 $ todo -l -k cli/bugs/
 ```
-    [x] (#137) Return an exit code instead of void
-    [ ] (#142) Add null check
+<pre><code>
+[x] (#137) Return an exit code instead of void
+[ ] (#142) Add null check
+</code></pre>
 
 * List an unlabeled task
 ```sh
 $ todo -l -k api/rest/1
 ```
-    [ ] Deprecate XML support
+<pre><code>
+[ ] Deprecate XML support
+</code></pre>
 
 * Add an unlabeled task
 ```sh
