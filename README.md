@@ -38,11 +38,13 @@ $ make test
 Usage examples
 --------------
 
+View the raw source of this file for the corresponding program output.
+
 * List tasks
 ```sh
 $ todo -l
 ```
-<pre><code>
+<!--
 [ ] (api) 
   [ ] (rest) 
     [x] (0) Refactor Accept header parsing
@@ -52,34 +54,34 @@ $ todo -l
     [x] (#137) Return an exit code instead of void
     [ ] (#142) Add null check
 [x] (opts) Parse additional options for running in development, staging, and production environments
-</code></pre>
+-->
 
 * List a labeled task
 ```sh
 $ todo -l -k cli/bugs
 ```
-<pre><code>
+<!--
 [ ] (bugs)
   [x] (#137) Return an exit code instead of void
   [ ] (#142) Add null check
-</code></pre>
+-->
 
 * List child tasks
 ```sh
 $ todo -l -k cli/bugs/
 ```
-<pre><code>
+<!--
 [x] (#137) Return an exit code instead of void
 [ ] (#142) Add null check
-</code></pre>
+-->
 
 * List an unlabeled task
 ```sh
 $ todo -l -k api/rest/1
 ```
-<pre><code>
+<!--
 [ ] Deprecate XML support
-</code></pre>
+-->
 
 * Add an unlabeled task
 ```sh
