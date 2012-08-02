@@ -44,8 +44,8 @@ test: all
 	@tests/util_test
 
 install: all
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include
+	@mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include
 	install -s -c -m 0555 $(EXECUTABLE) $(PREFIX)/bin
 
 uninstall:
-	rm $(PREFIX)/bin/$(EXECUTABLE)
+	@rm $(PREFIX)/bin/$(EXECUTABLE)
