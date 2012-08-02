@@ -284,7 +284,14 @@ int execute_edit(todo_t* todo, char* path, char* value) {
 
 int execute_remove(todo_t* todo, char* path) {
   if (!path) fatal_error("No key specified\n");
-  todo_path_remove(todo, path);
+
+  if (strcmp("/", path) == 0) {
+    todo_destroy(todo);
+    todo = todo_create();
+  } else { 
+    todo_path_remove(todo, path);
+  }
+
   return 0;
 }
 
