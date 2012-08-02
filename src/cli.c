@@ -13,7 +13,18 @@ static int VERBOSE = 0;
 
 static int exit_code = 0;
 
-static char* usage = "Usage: todo [-[h|l|a|r|e|m|o|x|p]] [-[q|v]] [-k key] [-f filename] task\n";
+static char* usage = "usage: todo [action] [flags*] [-k key] [-f filename] ...\n\n" 
+                     "actions\n"
+                     "  -h    show this message\n"
+                     "  -l    list tasks\n"
+                     "  -a    add a task\n"
+                     "  -e    edit an existing task value\n"
+                     "  -o    mark task as incomplete\n"
+                     "  -x    mark task as complete\n"
+                     "  -p    set task priority\n\n"
+                     "flags\n"
+                     "  -D    debug mode\n"
+                     "  -v    verbose mode\n";
 
 static void fatal_error(char* fmt, ...);
 
@@ -33,14 +44,16 @@ int main(int argc, char** argv) {
   char* arg = NULL;
 
   // parse cli options
-  while ((opt = getopt(argc, argv, ":hlarenoxpvDqk:f:")) != -1) {
+  while ((opt = getopt(argc, argv, ":hlareoxpvDqk:f:")) != -1) {
     switch (opt) {
     case 'h':
+      printf("%s", usage);
+      return 0;
+
     case 'l':
     case 'a':
     case 'r':
     case 'e':
-    case 'm':
     case 'o':
     case 'x':
     case 'p':
@@ -153,7 +166,7 @@ void fatal_error(char* fmt, ...) {
 }
 
 void vfatal_error(char* fmt, va_list argp) {
-  char buffer[250];
+  char buffer[500];
   vsnprintf(buffer, sizeof(buffer), fmt, argp);
   printf("%s", buffer);
   exit(++exit_code);
@@ -172,9 +185,6 @@ int execute(todo_t* todo, char cmd, char* key, char* arg) {
 
   case 'r':
     return execute_remove(todo, key);
-
-  case 'n':
-    return execute_rename(todo, key, arg);
 
   case 'o':
     return execute_mark(todo, key, 0);
