@@ -6,6 +6,15 @@
 #include <sys/ioctl.h>
 #include "todo.h"
 
+// color codes
+#define ESC     27
+#define DEFAULT 0
+#define BOLD    1
+#define RED     31
+#define MAGENTA 35 
+#define YELLOW  33 
+#define CYAN    36
+
 static const char* top_border = "=";
 
 static const char* bottom_border = "-";
@@ -21,6 +30,9 @@ static void print_column(const char* buffer, size_t width, size_t margin, int is
 
 // width of terminal
 static size_t tty_width();
+
+// foreground color code
+static unsigned int task_priority_color(task_priority_t value);
 
 void task_print(task_t* task, int verbose);
 
@@ -50,16 +62,23 @@ void task_print_compact(task_t* task, size_t width, size_t margin) {
   size_t outer_margin = margin + inner_margin;
   size_t inner_width  = width - margin - inner_margin;
 
+  unsigned int color = task_priority_color(task->priority);
   char* text = NULL;
 
   // print status box
   print_indent("", margin);
-  printf("[%c] ", task->status == COMPLETE ? 'x' : ' ');
+  printf("[%c[%dm%c%c[%dm] ", ESC, BOLD, task->status == COMPLETE ? 'x' : ' ', ESC, DEFAULT);
 
   // print text
   if (task->value) {
     if (task->key)
-      asprintf(&text, "(%s) %s", task->key, task->value);
+      asprintf(&text, "%c[%d;%dm(%c[%dm%s%c[%d;%dm)%c[%dm %s",
+          ESC, DEFAULT, color,
+          ESC, DEFAULT,
+          task->key,
+          ESC, DEFAULT, color,
+          ESC, DEFAULT,
+          task->value);
 
     print_column(text ? text : task->value, inner_width, outer_margin, 1);
   }
@@ -73,10 +92,16 @@ void task_print_compact(task_t* task, size_t width, size_t margin) {
 
 void task_print_verbose(task_t* task, size_t width, size_t margin) {
   size_t inner_margin = 4;
+  unsigned int color = task_priority_color(task->priority);
 
   // print heading
   print_indent("", margin); 
-  printf("(%s)\n", task->key ? task->key : "?");
+  printf("%c[%d;%dm(%c[%dm%s%c[%d;%dm)%c[%dm\n",
+      ESC, DEFAULT, color,
+      ESC, DEFAULT,
+      task->key,
+      ESC, DEFAULT, color,
+      ESC, DEFAULT);
 
   // print top border
   print_indent("", margin);
@@ -85,7 +110,7 @@ void task_print_verbose(task_t* task, size_t width, size_t margin) {
 
   // print status box
   print_indent("", margin);
-  printf("[%c] ", task->status == COMPLETE ? 'x' : ' ');
+  printf("[%c[%dm%c%c[%dm] ", ESC, BOLD, task->status == COMPLETE ? 'x' : ' ', ESC, DEFAULT);
 
   // print text
   if (task->value)
@@ -197,4 +222,18 @@ static size_t tty_width() {
   struct winsize ttys; 
   ioctl(0, TIOCGWINSZ, &ttys);
   return ttys.ws_col;
+}
+
+static unsigned int task_priority_color(task_priority_t value) {
+ switch(value) {
+  case 04:
+    return RED;
+  case 02:
+    return MAGENTA;
+  case 01:
+  default:
+    return DEFAULT;
+  case 00:
+    return  CYAN;
+  }
 }
