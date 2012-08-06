@@ -367,7 +367,7 @@ void todo_remove(todo_t* todo, char* key) {
 }
 
 task_t* todo_lookup(todo_t* todo, char* key) {
-  char* err;
+  char* err = NULL;
   int is_int = 0;
   long int i;
 
@@ -465,8 +465,6 @@ void todo_path_remove(todo_t* todo, char* path) {
     ptr = rest;
   }
 
-  free(tmp);
-
   if (task) {
     if (is_todo_path(path) && task->todo) {
       todo_destroy(task->todo);
@@ -475,6 +473,8 @@ void todo_path_remove(todo_t* todo, char* path) {
       todo_remove(prev_parent, prev);
     }
   }
+
+  free(tmp);
 }
 
 task_t* todo_path_lookup(todo_t* todo, char* path) {
