@@ -123,8 +123,10 @@ void tasklist_insert(tasklist_t** ref, task_t* task, int i) {
   tasklist_t* tail = tasklist_create(task);
   int j = 0;
 
-  if (i == 0)
-    return tasklist_prepend(ref, task);
+  if (i == 0) {
+    tasklist_prepend(ref, task);
+    return;
+  }
 
   while (head) {
     if (i == ++j) {
@@ -369,6 +371,8 @@ task_t* todo_lookup(todo_t* todo, char* key) {
   int is_int = 0;
   long int i;
 
+  if (!todo || !key) return NULL;
+
   i = strtol(key, &err, 10);
 
   if (key[0] != '\n' && (*err == '\n' || *err == '\0'))
@@ -450,10 +454,12 @@ void todo_path_remove(todo_t* todo, char* path) {
   while ((token = strtok_r(ptr, "/", &rest))) {
     task = todo_lookup(parent, token);
     prev = token;
+    prev_parent = parent;
 
     if(task && task->todo) {
-      prev_parent = parent;
       parent = task->todo;
+    } else {
+      parent = NULL;
     }
 
     ptr = rest;
@@ -474,6 +480,8 @@ void todo_path_remove(todo_t* todo, char* path) {
 task_t* todo_path_lookup(todo_t* todo, char* path) {
   task_t* task = NULL;
   char *ptr, *rest, *token;
+
+  if (!todo || !path) return NULL;
 
   // copy path because tokenizing will turn '/' to '\0'
   char *tmp = malloc(strlen(path) + 1);
