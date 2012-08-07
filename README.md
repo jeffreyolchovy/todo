@@ -25,13 +25,13 @@ flags
 
 Installation
 ------------
-```
+```sh
 $ make && sudo make install
 ```
 
 Tests
 ------------
-```
+```sh
 $ make test
 ```
 
