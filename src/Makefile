@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -g -O -Wall -I../lib/libyaml/build/include -I.
+CFLAGS=-c -g -std=c99 -pedantic -Wall -Wextra -O -I../lib/libyaml/build/include -I.
 LDFLAGS=-L../lib/libyaml/build/lib -lyaml
 SOURCES=$(shell ls *.c)
 OBJECTS=$(SOURCES:.c=.o)

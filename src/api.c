@@ -193,7 +193,7 @@ taskmap_t* taskmap_create(unsigned lists_size) {
   map->lists = malloc(sizeof(tasklist_t*) * lists_size);
   map->lists_size = lists_size;
 
-  int i;
+  size_t i;
 
   for (i = 0; i < map->lists_size; i++)
     map->lists[i] = NULL;
@@ -204,7 +204,7 @@ taskmap_t* taskmap_create(unsigned lists_size) {
 void taskmap_destroy(taskmap_t* map) {
   if (!map) return;
 
-  int i;
+  size_t i;
 
   for (i = 0; i < map->lists_size; i++)
     if (map->lists[i])
@@ -215,7 +215,7 @@ void taskmap_destroy(taskmap_t* map) {
 }
 
 void taskmap_apply(taskmap_t* map, void (*f)(task_t*)) {
-  int i;
+  size_t i;
 
   for (i = 0; i < map->lists_size; i++)
     if (map->lists[i])

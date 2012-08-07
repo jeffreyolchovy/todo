@@ -88,7 +88,7 @@ void doc_append_tasklist(yaml_document_t* doc, int root, tasklist_t* list) {
 }
 
 void doc_append_taskmap(yaml_document_t* doc, int root, taskmap_t* map) {
-  int i;
+  size_t i;
 
   for (i = 0; i < map->lists_size; i++)
     if (map->lists[i])

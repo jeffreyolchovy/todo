@@ -156,7 +156,7 @@ void tasklist_print(tasklist_t* list, size_t width, size_t margin, int verbose) 
 }
 
 void taskmap_print(taskmap_t* map, size_t width, size_t margin, int verbose) {
-  int i;
+  size_t i;
 
   for (i = 0; i < map->lists_size; i++)
     if (map->lists[i])
