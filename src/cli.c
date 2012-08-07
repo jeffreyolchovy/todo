@@ -306,6 +306,7 @@ int execute_remove(todo_t* todo, char* path) {
 }
 
 int execute_rename(todo_t* todo, char* from, char* to) {
+  if (todo && from && to) {} else {}
   fatal_error("Not yet implemented\n");
   return 1;
 }
@@ -337,7 +338,7 @@ int execute_prioritize(todo_t* todo, char* path, char* priority) {
   void mark_task_normal (task_t* task);
   void mark_task_low    (task_t* task);
 
-  void* f = NULL;
+  void (*f)(task_t*);
 
   switch(task_priority_valueof(priority)) {
   case URGENT:
