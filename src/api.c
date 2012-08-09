@@ -145,6 +145,7 @@ void tasklist_remove(tasklist_t** ref, int i) {
 
   if (i == 0) {
     *ref = head->next;
+    tasklist_destroy(head);
     return;
   }
 
@@ -152,7 +153,7 @@ void tasklist_remove(tasklist_t** ref, int i) {
     if (i == ++j) {
       tasklist_t* temp = head->next;
       head->next = temp->next;
-      free(temp->current);
+      task_destroy(temp->current);
       free(temp);
       return;
     }
@@ -291,7 +292,6 @@ void taskmap_remove(taskmap_t* map, char* key) {
 
       list1->current = NULL;
       free(list1);
-      //tasklist_destroy(list1);
       return;
     }
 }
