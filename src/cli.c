@@ -323,6 +323,8 @@ int execute_rename(todo_t* todo, char* from, char* to) {
 
   if (!task->key)
     fatal_error("Task must have key in order to be renamed\n");
+  else
+    free(task->key);
 
   task->key = malloc(strlen(to) + 1);
   strcpy(task->key, to);
