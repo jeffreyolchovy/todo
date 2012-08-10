@@ -19,7 +19,6 @@ static char* usage = "usage: todo [action] [flags*] [-k key] [-f filename] ...\n
                      "  -l    list tasks\n"
                      "  -a    add a task\n"
                      "  -e    edit an existing task value\n"
-                     //"  -n    rename an existing task key\n"
                      "  -o    mark task as incomplete\n"
                      "  -x    mark task as complete\n"
                      "  -p    set task priority\n\n"
@@ -185,11 +184,6 @@ int execute(todo_t* todo, char cmd, char* key, char* arg) {
   case 'e':
     return execute_edit(todo, key, arg);
 
-  /*
-  case 'n':
-    return execute_rename(todo, key, arg);
-  */
-
   case 'r':
     return execute_remove(todo, key);
 
@@ -313,29 +307,6 @@ int execute_remove(todo_t* todo, char* path) {
 
   todo_print(todo, VERBOSE);
   return 0;
-}
-
-int execute_rename(todo_t* todo, char* from, char* to) {
-  if (!from || !to) fatal_error("Must specify existing and new keys\n");
-
-  task_t* task = todo_path_lookup(todo, from);
-
-  if (!task)
-    fatal_error("No task found at key '%s'\n", from);
-
-  if (is_todo_path(from) || is_todo_path(to))
-    fatal_error("Key must not end with '/'\n");
-
-  if (!task->key)
-    fatal_error("Task must have key in order to be renamed\n");
-  else
-    free(task->key);
-
-  task->key = malloc(strlen(to) + 1);
-  strcpy(task->key, to);
-
-  task_print(task, VERBOSE);
-  return 1;
 }
 
 int execute_mark(todo_t* todo, char* path, int is_complete) {

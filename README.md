@@ -13,7 +13,6 @@ actions
   -l    list tasks
   -a    add a task
   -e    edit an existing task value
-  -n    rename an existing task key
   -o    mark task as incomplete
   -x    mark task as complete
   -p    set task priority

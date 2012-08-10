@@ -145,8 +145,6 @@ int execute_edit(todo_t* todo, char* path, char* value);
 
 int execute_remove(todo_t* todo, char* path);
 
-int execute_rename(todo_t* todo, char* from, char* to);
-
 int execute_mark(todo_t* todo, char* path, int is_complete);
 
 int execute_prioritize(todo_t* todo, char* path, char* priority);
