@@ -19,7 +19,7 @@ static char* usage = "usage: todo [action] [flags*] [-k key] [-f filename] ...\n
                      "  -l    list tasks\n"
                      "  -a    add a task\n"
                      "  -e    edit an existing task value\n"
-                     "  -n    rename an existing task key\n"
+                     //"  -n    rename an existing task key\n"
                      "  -o    mark task as incomplete\n"
                      "  -x    mark task as complete\n"
                      "  -p    set task priority\n\n"
@@ -185,8 +185,10 @@ int execute(todo_t* todo, char cmd, char* key, char* arg) {
   case 'e':
     return execute_edit(todo, key, arg);
 
+  /*
   case 'n':
     return execute_rename(todo, key, arg);
+  */
 
   case 'r':
     return execute_remove(todo, key);
@@ -274,6 +276,7 @@ int execute_add(todo_t* todo, char* path, char* value) {
     }
   }
     
+  todo_print(todo, VERBOSE);
   return 0;
 }
 
@@ -294,6 +297,7 @@ int execute_edit(todo_t* todo, char* path, char* value) {
   task->value = malloc(strlen(value) + 1);
   strcpy(task->value, value);
 
+  task_print(task, VERBOSE);
   return 0;
 }
 
@@ -307,6 +311,7 @@ int execute_remove(todo_t* todo, char* path) {
     todo_path_remove(todo, path);
   }
 
+  todo_print(todo, VERBOSE);
   return 0;
 }
 
@@ -329,6 +334,7 @@ int execute_rename(todo_t* todo, char* from, char* to) {
   task->key = malloc(strlen(to) + 1);
   strcpy(task->key, to);
 
+  task_print(task, VERBOSE);
   return 1;
 }
 
@@ -343,6 +349,7 @@ int execute_mark(todo_t* todo, char* path, int is_complete) {
   void mark_task_incomplete (task_t*);
 
   task_apply(task, is_complete ? mark_task_complete : mark_task_incomplete);
+  todo_print(todo, VERBOSE);
 
   return 0;
 }
@@ -380,6 +387,7 @@ int execute_prioritize(todo_t* todo, char* path, char* priority) {
   }
 
   task_apply(task, f);
+  todo_print(todo, VERBOSE);
 
   return 0;
 }
