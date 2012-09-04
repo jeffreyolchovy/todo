@@ -1,8 +1,22 @@
 #include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
 #include "minunit.h"
 #include "../todo.h"
 
 int tests_run = 0;
+
+static char* test_task() {
+  task_t* a = task_create(NULL, "a");
+  task_t* b = task_copy(a);
+
+  mu_assert(strcmp(a->value, b->value) == 0, "error, a->value != b->value");
+
+  task_destroy(a);
+  task_destroy(b);
+
+  return 0;
+}
 
 static char* test_tasklist() {
   task_t* a = task_create(NULL, "a");
@@ -93,6 +107,7 @@ static char* test_todo() {
 }
 
 static char* all_tests() {
+  mu_run_test(test_task);
   mu_run_test(test_tasklist);
   mu_run_test(test_taskmap);
   mu_run_test(test_todo);

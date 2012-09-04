@@ -67,6 +67,8 @@ task_t* task_create(char* name, char* description);
 
 void task_destroy(task_t* task);
 
+task_t* task_copy(task_t* src);
+
 void task_apply(task_t* task, void (*f)(task_t*));
 
 task_status_t task_status_valueof(char* str);

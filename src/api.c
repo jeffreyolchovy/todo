@@ -38,6 +38,32 @@ void task_destroy(task_t* task) {
   free(task);
 }
 
+task_t* task_copy(task_t* src) {
+  if (!src) return NULL;
+
+  task_t* copy = malloc(sizeof(task_t));
+
+  if (!copy) return NULL;
+
+  copy->key       = NULL;
+  copy->value     = NULL;
+  copy->status    = src->status;
+  copy->priority  = src->priority;
+  copy->todo      = NULL;
+
+  if (src->key) {
+    copy->key = malloc(strlen(src->key) + 1);
+    strcpy(copy->key, src->key);
+  }
+
+  if (src->value) {
+    copy->value = malloc(strlen(src->value) + 1);
+    strcpy(copy->value, src->value);
+  }
+
+  return copy;
+}
+
 void task_apply(task_t* task, void (*f)(task_t*)) {
   if (task->todo) todo_apply(task->todo, *f);
   (*f)(task);
@@ -145,6 +171,7 @@ void tasklist_remove(tasklist_t** ref, int i) {
 
   if (i == 0) {
     *ref = head->next;
+    head->next = NULL;
     tasklist_destroy(head);
     return;
   }
@@ -244,6 +271,14 @@ task_t* taskmap_lookup(taskmap_t* map, char* key) {
 }
 
 void taskmap_insert(taskmap_t* map, task_t* task) {
+  if (task->key == NULL)
+    return;
+
+  task_t* current_task = taskmap_lookup(map, task->key);
+
+  if (current_task != NULL)
+    taskmap_remove(map, task->key);
+
   unsigned hash = taskmap_hash(map, task->key);
   tasklist_t* list = map->lists[hash];
 
