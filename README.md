@@ -37,103 +37,79 @@ $ make test
 Usage examples
 --------------
 
-View the raw source of this file for the corresponding program output.
+### List tasks
 
-* List tasks
-```sh
-$ todo -l
-```
-<!--
-[ ] (api) 
-  [ ] (rest) 
-    [x] (0) Refactor Accept header parsing
-    [ ] (1) Deprecate XML support
-[ ] (cli) 
-  [ ] (bugs) 
+    $ todo -l
+    [ ] (api) 
+      [ ] (rest) 
+        [x] (0) Refactor Accept header parsing
+        [ ] (1) Deprecate XML support
+      [ ] (cli) 
+      [ ] (bugs) 
+        [x] (#137) Return an exit code instead of void
+        [ ] (#142) Add null check
+    [x] (opts) Parse additional options for running in development, staging, and production environments
+
+    
+### List a labeled task
+
+    $ todo -l -k cli/bugs
+    [ ] (bugs)
+      [x] (#137) Return an exit code instead of void
+      [ ] (#142) Add null check
+
+### List child tasks
+
+    $ todo -l -k cli/bugs/
     [x] (#137) Return an exit code instead of void
     [ ] (#142) Add null check
-[x] (opts) Parse additional options for running in development, staging, and production environments
--->
 
-* List a labeled task
-```sh
-$ todo -l -k cli/bugs
-```
-<!--
-[ ] (bugs)
-  [x] (#137) Return an exit code instead of void
-  [ ] (#142) Add null check
--->
+### List an unlabeled task
 
-* List child tasks
-```sh
-$ todo -l -k cli/bugs/
-```
-<!--
-[x] (#137) Return an exit code instead of void
-[ ] (#142) Add null check
--->
+    $ todo -l -k api/rest/1
+    [ ] Deprecate XML support
 
-* List an unlabeled task
-```sh
-$ todo -l -k api/rest/1
-```
-<!--
-[ ] Deprecate XML support
--->
+### Add an unlabeled task
 
-* Add an unlabeled task
-```sh
-$ todo -a Schedule call with Jim RE: security audit
-```
+    $ todo -a Schedule call with Jim RE: security audit
 
-* Add a labeled task
-```sh
-$ todo -a -k cli/bugs/#151 Readline support
-```
+### Add a labeled task
 
-* Add an unlabeled subtask
-```sh
-$ todo -a -k api/rest/ PATCH vs. PUT vs. POST
-```
+    $ todo -a -k cli/bugs/#151 Readline support
 
-* Edit a labeled task
-```sh
-$ todo -e -k cli/bugs/#151 Readline (or Editline?) support
-```
+### Add an unlabeled subtask
 
-* Edit an unlabeled child task
-```sh
-$ todo -e -k rest/api/1 Deprecate custom XML format in favor of RSS
-```
+    $ todo -a -k api/rest/ PATCH vs. PUT vs. POST
 
-* Remove an unlabeled task
-```sh
-$ todo -r -k rest/api/1
-```
+### Edit a labeled task
 
-* Remove a labeled task
-```sh
-$ todo -r -k cli/bugs/#137
-```
+    $ todo -e -k cli/bugs/#151 Readline (or Editline?) support
 
-* Remove all child tasks
-```sh
-$ todo -r -k cli/bugs/
-```
+### Edit an unlabeled child task
 
-* Mark a task as complete 
-```sh
-$ todo -x -k cli/bugs 
-```
+    $ todo -e -k rest/api/1 Deprecate custom XML format in favor of RSS
 
-* Mark a task as incomplete
-```sh
-$ todo -o -k cli/bugs/#151
-```
+### Remove an unlabeled task
 
-* Change the priority of a task
-```sh
-$ todo -p -k cli/bugs/#137 [urgent|high|normal|low]
-```
+    $ todo -r -k rest/api/1
+
+### Remove a labeled task
+
+    $ todo -r -k cli/bugs/#137
+
+### Remove all child tasks
+
+    $ todo -r -k cli/bugs/
+
+### Mark a task as complete 
+
+    $ todo -x -k cli/bugs 
+
+### Mark a task as incomplete
+
+    $ todo -o -k cli/bugs/#151
+
+### Change the priority of a task
+
+    $ todo -p -k cli/bugs/#137 [urgent|high|normal|low]
 
