@@ -38,7 +38,7 @@ clean:
 distclean: deps-clean clean
 
 test: all
-	$(CC) -Wall tests/api_test.c api.o util.o -o tests/api_test
+	$(CC) -Wall tests/api_test.c task.o tasklist.o taskmap.o todo.o util.o -o tests/api_test
 	@tests/api_test
 	$(CC) -Wall tests/util_test.c util.o -o tests/util_test
 	@tests/util_test
