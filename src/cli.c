@@ -5,6 +5,7 @@
 #include<string.h>
 #include<limits.h>
 #include<unistd.h>
+#include<getopt.h>
 #include "todo.h"
 
 static int DEBUG = 0;
@@ -15,16 +16,16 @@ static int exit_code = 0;
 
 static char* usage = "usage: todo [action] [flags*] [-k key] [-f filename] ...\n\n" 
                      "actions\n"
-                     "  -h    show this message\n"
-                     "  -l    list tasks\n"
-                     "  -a    add a task\n"
-                     "  -e    edit an existing task value\n"
-                     "  -o    mark task as incomplete\n"
-                     "  -x    mark task as complete\n"
-                     "  -p    set task priority\n\n"
+                     "  -h, --help          show this message\n"
+                     "  -l, --ls, --list    list tasks\n"
+                     "  -a, --add           add a task\n"
+                     "  -e, --edit          edit an existing task value\n"
+                     "  -o, --reopen        mark task as incomplete\n"
+                     "  -x, --close         mark task as complete\n"
+                     "  -p, --priority      set task priority\n\n"
                      "flags\n"
-                     "  -D    debug mode\n"
-                     "  -v    verbose mode\n";
+                     "  -D, --debug         debug mode\n"
+                     "  -v, --verbose       verbose mode\n";
 
 static void fatal_error(char* fmt, ...);
 
@@ -44,7 +45,25 @@ int main(int argc, char** argv) {
   char* arg = NULL;
 
   // parse cli options
-  while ((opt = getopt(argc, argv, ":hlarenoxpvDqk:f:")) != -1) {
+  static struct option longopts[] = {
+    { "debug",    no_argument, NULL, 'D' },
+    { "verbose",  no_argument, NULL, 'v' },
+    { "help",     no_argument, NULL, 'h' },
+    { "ls",       no_argument, NULL, 'l' },
+    { "list",     no_argument, NULL, 'l' },
+    { "add",      no_argument, NULL, 'a' },
+    { "edit",     no_argument, NULL, 'e' },
+    { "reopen",   no_argument, NULL, 'o' },
+    { "close",    no_argument, NULL, 'x' },
+    { "priority", no_argument, NULL, 'p' },
+
+    { "key",  required_argument, NULL, 'k' },
+    { "file", required_argument, NULL, 'f' },
+
+    { NULL, 0, NULL, 0 }
+  };
+
+  while ((opt = getopt_long(argc, argv, ":hlarenoxpvDqk:f:", longopts, NULL)) != -1) {
     switch (opt) {
     case 'h':
       printf("%s", usage);
@@ -65,7 +84,7 @@ int main(int argc, char** argv) {
         cmd_opt = opt;
       }
       break;
-    
+
     case 'v':
       VERBOSE = 1;
       break;
@@ -355,9 +374,13 @@ int execute_prioritize(todo_t* todo, char* path, char* priority) {
   case LOW:
     f = mark_task_low;
     break;
+
+  default:
+    f = NULL;
+    break;
   }
 
-  task_apply(task, f);
+  if (f != NULL) task_apply(task, f);
   todo_print(todo, VERBOSE);
 
   return 0;
@@ -365,7 +388,7 @@ int execute_prioritize(todo_t* todo, char* path, char* priority) {
 
 void mark_task_complete   (task_t* task) { task->status   = COMPLETE;   }
 void mark_task_incomplete (task_t* task) { task->status   = INCOMPLETE; }
-void mark_task_urgent     (task_t* task) { task->priority = URGENT;     } 
-void mark_task_high       (task_t* task) { task->priority = HIGH;       } 
-void mark_task_normal     (task_t* task) { task->priority = NORMAL;     } 
-void mark_task_low        (task_t* task) { task->priority = LOW;        } 
+void mark_task_urgent     (task_t* task) { task->priority = URGENT;     }
+void mark_task_high       (task_t* task) { task->priority = HIGH;       }
+void mark_task_normal     (task_t* task) { task->priority = NORMAL;     }
+void mark_task_low        (task_t* task) { task->priority = LOW;        }
