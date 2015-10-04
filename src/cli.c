@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   char* key = NULL;
 
   // the (default) value of the file (f) opt
-  char* filename = "TODO.yaml";
+  char* filename = "TODO.yml";
 
   // the value of the remaining non-option args
   char* arg = NULL;
