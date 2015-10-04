@@ -9,17 +9,17 @@ Usage
 todo [action] [flags*] [-k key] [-f filename] ...
 
 actions
-  -h    show this message
-  -l    list tasks
-  -a    add a task
-  -e    edit an existing task value
-  -o    mark task as incomplete
-  -x    mark task as complete
-  -p    set task priority
+  -h, --help          show this message
+  -l, --ls, --list    list tasks
+  -a, --add           add a task
+  -e, --edit          edit an existing task value
+  -o, --reopen        mark task as incomplete
+  -x, --close         mark task as complete
+  -p, --priority      set task priority
 
 flags
-  -D    debug mode
-  -v    verbose mode
+  -D, --debug         debug mode
+  -v, --verbose       verbose mode
 ```
 
 Installation
